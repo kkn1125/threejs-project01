@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import { Physics, usePlane } from "@react-three/cannon";
+import MovableCube from "./components/atoms/MovableCube";
+import { useRef } from "react";
+import { Vector3 } from "three";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function Ground() {
+  const [ref] = usePlane(() => ({
+    rotation: [-Math.PI / 2, 0, 0],
+    position: [0, 0, 0],
+  }));
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <group>
+      <mesh ref={ref as any} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color='brown' />
+      </mesh>
+    </group>
+  );
 }
 
-export default App
+function App() {
+  const cameraRef = useRef();
+  const cubePosition = useRef(new Vector3(0, 5, 0));
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", boxSizing: "border-box" }}>
+      <Canvas shadows camera={{ position: [15, 15, 15], fov: 75 }} ref={cameraRef}>
+        <Physics gravity={[0, -9.81, 0]}>
+          <color attach='background' args={["skyblue"]} />
+          <ambientLight intensity={0.5} />
+          <directionalLight
+            position={[5, 5, 5]}
+            castShadow
+            shadow-mapSize-width={1024}
+            shadow-mapSize-height={1024}
+          />
+          <MovableCube setCubePosition={(pos) => cubePosition.current.copy(pos)} />
+          <Ground />
+          <OrbitControls
+            target={cubePosition.current}
+            enablePan={false}
+            enableZoom={false}
+            enableRotate={false}
+          />
+        </Physics>
+      </Canvas>
+    </div>
+  );
+}
+
+export default App;
